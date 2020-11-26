@@ -9,8 +9,10 @@
         </File>
     </Appenders>
     <Loggers>
-        <Root level="info">
+        <Root level="error">
             <AppenderRef ref="ConsoleAppender" />
+        </Root>
+        <Root level="info">
             <AppenderRef ref="FileAppender"/>
         </Root>
     </Loggers>

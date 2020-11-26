@@ -6,11 +6,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Starter {
@@ -41,16 +40,45 @@ public class Starter {
     }
 
     private static BlockingQueue<Task> tasks;
+    private static AtomicInteger allDone;
+    private static Semaphore servers;
+    
 
     public static void main(String[] args) {
         tasks = new ArrayBlockingQueue<>(maxTasksCount);
-        AtomicInteger allDone = new AtomicInteger();
-        Semaphore servers = new Semaphore(serversCount);
-        startManager();
+        allDone = new AtomicInteger();
+        servers = new Semaphore(serversCount);
+        Manager manager = new Manager(tasks);
+        FutureTask<Integer> managerFuture = new FutureTask<>(manager);
+        ExecutorService managerService = Executors.newSingleThreadExecutor();
+        ArrayList<Worker> workers = getWorkers();
+        ExecutorService computerService = Executors.newFixedThreadPool(workerCount / 2);
+        List<Future<?>> workerFutures = new ArrayList<>();
+        for(Callable<?> worker: workers){
+            workerFutures.add(computerService.submit(worker));
+        }
+        managerService.execute(managerFuture);
+        while(true){
+            if(managerFuture.isDone()){
+                managerService.shutdownNow();
+                for(Future<?> workerFuture: workerFutures){
+                    workerFuture.cancel(true);
+                }
+                computerService.shutdownNow();
+                System.exit(0);
+            }
+        }
+
+
     }
 
-    private static void startManager() {
-        FutureTask<Integer> managerFuture = new FutureTask<>(new Manager(tasks));
-        new Thread(managerFuture).start();
+    private static ArrayList<Worker> getWorkers() {
+        ArrayList<Worker> workers = new ArrayList<>();
+        for (int workerNumber = 0; workerNumber < workerCount; workerNumber++) {
+            String workerName = "Worker" + workerNumber;
+            Worker worker = new Worker(workerName, tasks, servers, allDone, countTasksForDay);
+            workers.add(worker);
+        }
+        return workers;
     }
 }
