@@ -4,59 +4,30 @@ package org.example.multithreadapp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Starter {
     private static final Logger LOG = LogManager.getLogger(Starter.class);
-    private static final String USER_DIR = System.getProperty("user.dir");
-    private static final String PROPERTIES_PATH = USER_DIR + "/src/main/resources/work.properties";
-    private static int startInterval;
-    private static int interval;
-    private static int workerCount;
-    private static int maxTasksCount;
-    private static int countTasksForDay;
-    private static int serversCount;
+    private static final WorkConfiguration workConfiguration = WorkConfiguration.getInstance();
 
-    static {
-        File file = new File(PROPERTIES_PATH);
-        try (FileReader reader = new FileReader(file)) {
-            Properties properties = new Properties();
-            properties.load(reader);
-            startInterval = Integer.parseInt(properties.getProperty("startInterval"));
-            interval = Integer.parseInt(properties.getProperty("interval"));
-            workerCount = Integer.parseInt(properties.getProperty("workerCount"));
-            maxTasksCount = Integer.parseInt(properties.getProperty("maxTasksCount"));
-            countTasksForDay = Integer.parseInt(properties.getProperty("tasksCountForDay"));
-            serversCount = Integer.parseInt(properties.getProperty("serversCount"));
-        } catch (Exception e) {
-            LOG.error(e.toString());
-        }
-    }
+    private static final BlockingQueue<Task> tasks = new ArrayBlockingQueue<>(workConfiguration.getMaxTasksCount());
+    private static final AtomicInteger allDone = new AtomicInteger();
+    private static final Semaphore servers = new Semaphore(workConfiguration.getServersCount());
+    private static final ExecutorService computerService = Executors.newFixedThreadPool(workConfiguration.getWorkerCount() / 2);
 
-    private static BlockingQueue<Task> tasks;
-    private static AtomicInteger allDone;
-    private static Semaphore servers;
-    
+    private static final Manager manager = new Manager(tasks);
+    private static final FutureTask<Integer> managerFuture = new FutureTask<>(manager);
+    private static final ExecutorService managerService = Executors.newSingleThreadExecutor();
+    private static final ArrayList<Worker> workers = new ArrayList<>();
+    private static final List<Future<?>> workerFutures = new ArrayList<>();
 
     public static void main(String[] args) {
-        tasks = new ArrayBlockingQueue<>(maxTasksCount);
-        allDone = new AtomicInteger();
-        servers = new Semaphore(serversCount);
-        Manager manager = new Manager(tasks);
-        FutureTask<Integer> managerFuture = new FutureTask<>(manager);
-        ExecutorService managerService = Executors.newSingleThreadExecutor();
-        ArrayList<Worker> workers = getWorkers();
-        ExecutorService computerService = Executors.newFixedThreadPool(workerCount / 2);
-        List<Future<?>> workerFutures = new ArrayList<>();
-        for(Callable<?> worker: workers){
-            workerFutures.add(computerService.submit(worker));
-        }
+        fillWorkers();
+        fillWorkerFutures();
+
         managerService.execute(managerFuture);
         while(true){
             if(managerFuture.isDone()){
@@ -72,13 +43,18 @@ public class Starter {
 
     }
 
-    private static ArrayList<Worker> getWorkers() {
-        ArrayList<Worker> workers = new ArrayList<>();
-        for (int workerNumber = 0; workerNumber < workerCount; workerNumber++) {
+    private static void fillWorkerFutures() {
+        for(Callable<?> worker: workers){
+            workerFutures.add(computerService.submit(worker));
+        }
+    }
+
+    private static void fillWorkers() {
+        for (int workerNumber = 0; workerNumber < workConfiguration.getWorkerCount(); workerNumber++) {
             String workerName = "Worker" + workerNumber;
-            Worker worker = new Worker(workerName, tasks, servers, allDone, countTasksForDay);
+            Worker worker = new Worker(workerName, tasks, servers, allDone, workConfiguration.getCountTasksForDay());
             workers.add(worker);
         }
-        return workers;
+        LOG.debug("List of workers filled");
     }
 }

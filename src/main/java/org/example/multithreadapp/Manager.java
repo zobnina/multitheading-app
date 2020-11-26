@@ -35,6 +35,8 @@ public class Manager implements Callable<Integer> {
             Task task = new Task(name, complexity);
             if (tasks.offer(task)) {
                 countTasks++;
+                String message = String.format("Got new task: \"%s\"", task.getName());
+                LOG.warn(message);
                 return task;
             } else {
                 String message = String.format("Task queue is filled. Task \"%s\" is not added.", task.getName());

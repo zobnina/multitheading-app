@@ -76,18 +76,24 @@ public class Worker implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        String message = String.format("%s started working", workerName);
-        LOG.info(message);
-        while (done < countTasksForDay) {
-            Task currentTask = tasks.poll();
-            if (currentTask != null) {
-                message = String.format("%s: I got task \"%s\"", workerName, currentTask.getName());
-                LOG.info(message);
-                doWork(currentTask);
+        try {
+            String message = String.format("%s started working", workerName);
+            LOG.info(message);
+            while (done < countTasksForDay) {
+                Task currentTask = tasks.poll();
+                if (currentTask != null) {
+                    message = String.format("%s: I got task \"%s\"", workerName, currentTask.getName());
+                    LOG.info(message);
+                    doWork(currentTask);
+                }
             }
+            message = String.format("%s: completed %d tasks and my working day is over", workerName, countTasksForDay);
+            LOG.info(message);
         }
-        message = String.format("%s: completed %d tasks and my working day is over", workerName, countTasksForDay);
-        LOG.info(message);
+        catch (Exception e){
+            String message = String.format("%s: The working day is over", workerName);
+            LOG.info(message);
+        }
         return done;
     }
 }
