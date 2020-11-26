@@ -7,6 +7,11 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileReader;
 import java.util.Properties;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Starter {
     private static final Logger LOG = LogManager.getLogger(Starter.class);
@@ -35,7 +40,17 @@ public class Starter {
         }
     }
 
+    private static BlockingQueue<Task> tasks;
+
     public static void main(String[] args) {
-        //
+        tasks = new ArrayBlockingQueue<>(maxTasksCount);
+        AtomicInteger allDone = new AtomicInteger();
+        Semaphore servers = new Semaphore(serversCount);
+        startManager();
+    }
+
+    private static void startManager() {
+        FutureTask<Integer> managerFuture = new FutureTask<>(new Manager(tasks));
+        new Thread(managerFuture).start();
     }
 }
