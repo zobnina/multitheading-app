@@ -13,4 +13,4 @@ Application based on java.util.concurrent library.
 
 Initial properties (number of servers, number of workers, report interval) are located in work.properties
 
-Work results are written to log files.
+Work results are written to log files. Logging properties are located in log4j2.xml
