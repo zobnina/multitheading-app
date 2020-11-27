@@ -1,10 +1,10 @@
-#Multithreading Application Example
+<h1>Multithreading Application Example</h1>
 
 Application based on java.util.concurrent library. 
 
-##DESCRIPTION
+<h2>DESCRIPTION</h2>
 
-* Manager constantly asks tasks from user in the console. 
+* The manager constantly asks for tasks from user in the console. 
 * Report Manager creates report tasks on schedule.
 * Developers distribute these tasks among themselves.  
     * If it is a usual task, it requires developing and testing. Testing takes twice a long.
