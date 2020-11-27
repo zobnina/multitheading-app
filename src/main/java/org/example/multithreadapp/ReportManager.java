@@ -7,8 +7,8 @@ import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 
-public class Leader implements Callable<Integer> {
-    private static final Logger LOG = LogManager.getLogger(Leader.class);
+public class ReportManager implements Callable<Integer> {
+    private static final Logger LOG = LogManager.getLogger(ReportManager.class);
     private static final int MAX_COMPLEXITY = 5;
     private static final int TIME_FOR_CREATING_REPORT = 5000;
 
@@ -17,7 +17,7 @@ public class Leader implements Callable<Integer> {
     private final Random random;
 
 
-    public Leader(BlockingQueue<Task> tasks) {
+    public ReportManager(BlockingQueue<Task> tasks) {
         this.tasks = tasks;
         number = 0;
         random = new Random();

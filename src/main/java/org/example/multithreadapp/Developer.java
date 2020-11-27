@@ -8,8 +8,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Worker implements Callable<Integer> {
-    private static final Logger LOG = LogManager.getLogger(Worker.class);
+public class Developer implements Callable<Integer> {
+    private static final Logger LOG = LogManager.getLogger(Developer.class);
     private static final int SECOND = 1000;
 
     private final String workerName;
@@ -19,7 +19,7 @@ public class Worker implements Callable<Integer> {
     private final Semaphore servers;
     private final int countTasksForDay;
 
-    public Worker(String name, BlockingQueue<Task> tasks, Semaphore servers, AtomicInteger allDone, int countTasksForDay) {
+    public Developer(String name, BlockingQueue<Task> tasks, Semaphore servers, AtomicInteger allDone, int countTasksForDay) {
         this.workerName = name;
         this.tasks = tasks;
         this.servers = servers;

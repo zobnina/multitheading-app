@@ -19,15 +19,15 @@ public class Starter {
 
     private static final ExecutorService computerService = Executors.newFixedThreadPool(workConfiguration.getWorkerCount() / 2);
 
-    private static final Manager manager = new Manager(tasks);
-    private static final FutureTask<Integer> managerFuture = new FutureTask<>(manager);
+    private static final Manager MANAGER = new Manager(tasks);
+    private static final FutureTask<Integer> managerFuture = new FutureTask<>(MANAGER);
     private static final ExecutorService managerService = Executors.newSingleThreadExecutor();
 
-    private static final ArrayList<Worker> workers = new ArrayList<>();
+    private static final ArrayList<Developer> DEVELOPERS = new ArrayList<>();
     private static final List<Future<?>> workerFutures = new ArrayList<>();
 
-    private static final Leader leader = new Leader(tasks);
-    private static final FutureTask<Integer> leaderFuture = new FutureTask<>(leader);
+    private static final ReportManager REPORT_MANAGER = new ReportManager(tasks);
+    private static final FutureTask<Integer> leaderFuture = new FutureTask<>(REPORT_MANAGER);
     private static final ScheduledExecutorService leaderService = Executors.newSingleThreadScheduledExecutor();
 
     public static void main(String[] args) {
@@ -53,7 +53,7 @@ public class Starter {
     }
 
     private static void fillWorkerFutures() {
-        for(Callable<?> worker: workers){
+        for(Callable<?> worker: DEVELOPERS){
             workerFutures.add(computerService.submit(worker));
         }
     }
@@ -61,8 +61,8 @@ public class Starter {
     private static void fillWorkers() {
         for (int workerNumber = 0; workerNumber < workConfiguration.getWorkerCount(); workerNumber++) {
             String workerName = "Worker" + workerNumber;
-            Worker worker = new Worker(workerName, tasks, servers, allDone, workConfiguration.getCountTasksForDay());
-            workers.add(worker);
+            Developer developer = new Developer(workerName, tasks, servers, allDone, workConfiguration.getCountTasksForDay());
+            DEVELOPERS.add(developer);
         }
         LOG.debug("List of workers filled");
     }
