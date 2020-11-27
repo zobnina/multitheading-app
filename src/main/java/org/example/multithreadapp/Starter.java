@@ -16,17 +16,25 @@ public class Starter {
     private static final BlockingQueue<Task> tasks = new ArrayBlockingQueue<>(workConfiguration.getMaxTasksCount());
     private static final AtomicInteger allDone = new AtomicInteger();
     private static final Semaphore servers = new Semaphore(workConfiguration.getServersCount());
+
     private static final ExecutorService computerService = Executors.newFixedThreadPool(workConfiguration.getWorkerCount() / 2);
 
     private static final Manager manager = new Manager(tasks);
     private static final FutureTask<Integer> managerFuture = new FutureTask<>(manager);
     private static final ExecutorService managerService = Executors.newSingleThreadExecutor();
+
     private static final ArrayList<Worker> workers = new ArrayList<>();
     private static final List<Future<?>> workerFutures = new ArrayList<>();
+
+    private static final Leader leader = new Leader(tasks);
+    private static final FutureTask<Integer> leaderFuture = new FutureTask<>(leader);
+    private static final ScheduledExecutorService leaderService = Executors.newSingleThreadScheduledExecutor();
 
     public static void main(String[] args) {
         fillWorkers();
         fillWorkerFutures();
+
+        leaderService.scheduleWithFixedDelay(leaderFuture, workConfiguration.getStartInterval(), workConfiguration.getInterval(), TimeUnit.SECONDS);
 
         managerService.execute(managerFuture);
         while(true){
@@ -36,6 +44,7 @@ public class Starter {
                     workerFuture.cancel(true);
                 }
                 computerService.shutdownNow();
+                leaderService.shutdownNow();
                 System.exit(0);
             }
         }
